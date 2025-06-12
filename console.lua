@@ -102,6 +102,10 @@ function Console:Error(text)
     self:Print(text, Color3.fromRGB(255, 70, 60))
 end
 
+function Console:Info(text)
+    self:Print(text, Color3.fromRGB(0, 175, 255))
+end
+
 function Console:Clear()
     for _,v in ipairs(scroll:GetChildren()) do
         if v:IsA("TextLabel") then v:Destroy() end
