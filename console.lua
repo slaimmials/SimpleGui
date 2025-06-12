@@ -4,7 +4,11 @@ MiniConsole - простейшая консоль для вывода текст
 Console:Print(text, color?) -- выводит строку (по умолчанию белым)
 Console:Warn(text)          -- выводит строку желтым цветом
 Console:Error(text)         -- выводит строку красным цветом
+Console:Clear()             -- очищает консоль
 Console:Remove()            -- удалить консоль из окна (или по нажатию на крестик)
+
+Автопрокрутка (примагничивание): если скроллбар внизу -- всегда после Print/Warn/Error прокручивает в самый низ.
+Если пользователь вручную отскроллил вверх -- автомат не работает пока не вернется вниз.
 --]]
 
 local Console = {}
@@ -39,6 +43,17 @@ closeBtn.Font = Enum.Font.SourceSansBold
 closeBtn.TextSize = 20
 closeBtn.AutoButtonColor = true
 
+local clearBtn = Instance.new("TextButton", frame)
+clearBtn.Size = UDim2.new(0, 24, 0, 22)
+clearBtn.Position = UDim2.new(1, -48, 0, 0)
+clearBtn.BackgroundTransparency = 1
+clearBtn.Text = "🗑"
+clearBtn.TextColor3 = Color3.fromRGB(180, 180, 180)
+clearBtn.Font = Enum.Font.SourceSansBold
+clearBtn.TextSize = 16
+clearBtn.AutoButtonColor = true
+clearBtn.ToolTip = "Clear"
+
 local scroll = Instance.new("ScrollingFrame", frame)
 scroll.Position = UDim2.new(0,0,0,22)
 scroll.Size = UDim2.new(1,0,1,-22)
@@ -52,6 +67,19 @@ local layout = Instance.new("UIListLayout", scroll)
 layout.SortOrder = Enum.SortOrder.LayoutOrder
 layout.Padding = UDim.new(0, 2)
 
+local stickToBottom = true
+local function isAtBottom()
+    return math.abs((scroll.CanvasPosition.Y + scroll.AbsoluteWindowSize.Y) - scroll.AbsoluteCanvasSize.Y) < 8
+end
+
+scroll:GetPropertyChangedSignal("CanvasPosition"):Connect(function()
+    stickToBottom = isAtBottom()
+end)
+
+local function scrollToBottom()
+    scroll.CanvasPosition = Vector2.new(0, math.max(0, scroll.AbsoluteCanvasSize.Y - scroll.AbsoluteWindowSize.Y))
+end
+
 function Console:Print(text, color)
     local t = Instance.new("TextLabel")
     t.Text = tostring(text)
@@ -62,7 +90,10 @@ function Console:Print(text, color)
     t.TextSize = 16
     t.Size = UDim2.new(1, -6, 0, 18)
     t.Parent = scroll
-    scroll.CanvasPosition = Vector2.new(0, math.huge)
+    if stickToBottom then
+        -- Используем задержку чтобы корректно проскроллило после layout-а
+        task.defer(scrollToBottom)
+    end
 end
 
 function Console:Warn(text)
@@ -73,12 +104,23 @@ function Console:Error(text)
     self:Print(text, Color3.fromRGB(255, 70, 60))
 end
 
+function Console:Clear()
+    for _,v in ipairs(scroll:GetChildren()) do
+        if v:IsA("TextLabel") then v:Destroy() end
+    end
+    task.defer(scrollToBottom)
+end
+
 function Console:Remove()
     sg:Destroy()
 end
 
 closeBtn.MouseButton1Click:Connect(function()
     Console:Remove()
+end)
+
+clearBtn.MouseButton1Click:Connect(function()
+    Console:Clear()
 end)
 
 return Console
