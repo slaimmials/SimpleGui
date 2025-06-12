@@ -52,7 +52,6 @@ clearBtn.TextColor3 = Color3.fromRGB(180, 180, 180)
 clearBtn.Font = Enum.Font.SourceSansBold
 clearBtn.TextSize = 16
 clearBtn.AutoButtonColor = true
-clearBtn.ToolTip = "Clear"
 
 local scroll = Instance.new("ScrollingFrame", frame)
 scroll.Position = UDim2.new(0,0,0,22)
@@ -91,7 +90,6 @@ function Console:Print(text, color)
     t.Size = UDim2.new(1, -6, 0, 18)
     t.Parent = scroll
     if stickToBottom then
-        -- Используем задержку чтобы корректно проскроллило после layout-а
         task.defer(scrollToBottom)
     end
 end
